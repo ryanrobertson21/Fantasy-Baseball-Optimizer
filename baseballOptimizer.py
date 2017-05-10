@@ -2,25 +2,58 @@ import csv, itertools
 
 lineupSpreadsheet = open('/Users/RyanRobertson21/Desktop/simpleball.csv')
 lineupReader = csv.reader(lineupSpreadsheet)
-lineupList = []
+playerDict = {}
+
 for row in lineupReader:
     playerList = []
     if lineupReader.line_num == 1:
         continue
-    playerList.append(row[0])
     playerList.append(row[1])
     playerList.append(row[3])
-    playerList.append(row[5])
-    playerList.append(row[7])
-    lineupList.append(playerList)
+    playerList.append(float(row[5]))
+    playerList.append(int(row[7]))
+    playerDict[row[0]] = playerList
 
- ### change the above to take the full name cell instead of the first and last name cells, will use id number to identify
 lineupSpreadsheet.close()
 
-outfielders = []
-for entry in lineupList:
-    if entry[1] == 'OF':
-        outfielders.append(entry[2])
+outfielders = {}
+for ids in playerDict:
+    if playerDict[ids][0] == 'OF':
+        outfielders[ids] = playerDict[ids]
 
-print(len(list(itertools.combinations(outfielders, 3))))
-print(lineupList)
+pitchers = {}
+for ids in playerDict:
+    if playerDict[ids][0] == 'P':
+        pitchers[ids] = playerDict[ids]
+
+catchers = {}
+for ids in playerDict:
+    if playerDict[ids][0] == 'C':
+        catchers[ids] = playerDict[ids]
+
+firstBase = {}
+for ids in playerDict:
+    if playerDict[ids][0] == '1B':
+        firstBase[ids] = playerDict[ids]
+
+secondBase = {}
+for ids in playerDict:
+    if playerDict[ids][0] == '2B':
+        secondBase[ids] = playerDict[ids]
+
+shortStop = {}
+for ids in playerDict:
+    if playerDict[ids][0] == 'SS':
+        shortStop[ids] = playerDict[ids]
+
+thirdBase = {}
+for ids in playerDict:
+    if playerDict[ids][0] == '3B':
+        thirdBase[ids] = playerDict[ids]
+
+outfielderGroups = list(itertools.combinations(outfielders, 3))
+
+allLineups = list(itertools.product(outfielderGroups, pitchers, catchers, firstBase, secondBase, shortStop, thirdBase))
+
+print(len(allLineups))
+print(thirdBase)
