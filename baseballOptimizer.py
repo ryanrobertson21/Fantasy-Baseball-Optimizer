@@ -13,6 +13,10 @@ for row in lineupReader:
     playerList.append(row[3])
     playerList.append(float(row[5]))
     playerList.append(int(row[7]))
+    try:
+        playerList.append(row[13])
+    except IndexError:
+        pass
     playerDict[row[0]] = playerList
 
 lineupSpreadsheet.close()
@@ -25,7 +29,11 @@ for ids in playerDict:
 pitchers = {}
 for ids in playerDict:
     if playerDict[ids][0] == 'P':
-        pitchers[ids] = playerDict[ids]
+        try:
+            if playerDict[ids][4] == 'Yes':
+                pitchers[ids] = playerDict[ids]
+        except IndexError:
+            pass
 
 catchers = {}
 for ids in playerDict:
@@ -53,11 +61,8 @@ for ids in playerDict:
         thirdBase[ids] = playerDict[ids]
 
 
-print(len(thirdBase))
-
-print(len(poolReducer(thirdBase, 30)))
-
-
+print(len(outfielders))
+print(len(pitchers))
 outfielderGroups = list(itertools.combinations(outfielders, 3))
 
 allLineups = list(itertools.product(outfielderGroups, pitchers, catchers, firstBase, secondBase, shortStop, thirdBase))
