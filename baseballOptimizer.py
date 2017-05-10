@@ -1,4 +1,5 @@
 import csv, itertools
+from poolReducer import poolReducer
 
 lineupSpreadsheet = open('/Users/RyanRobertson21/Desktop/simpleball.csv')
 lineupReader = csv.reader(lineupSpreadsheet)
@@ -50,6 +51,12 @@ thirdBase = {}
 for ids in playerDict:
     if playerDict[ids][0] == '3B':
         thirdBase[ids] = playerDict[ids]
+
+
+print(len(thirdBase))
+
+print(len(poolReducer(thirdBase, 30)))
+
 
 outfielderGroups = list(itertools.combinations(outfielders, 3))
 
