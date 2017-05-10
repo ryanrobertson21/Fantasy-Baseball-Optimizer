@@ -1,7 +1,7 @@
 import csv, itertools
 from poolReducer import poolReducer
 
-lineupSpreadsheet = open('/Users/RyanRobertson21/Desktop/simpleball.csv')
+lineupSpreadsheet = open('/Users/RyanRobertson21/Desktop/baseballData.csv')
 lineupReader = csv.reader(lineupSpreadsheet)
 playerDict = {}
 
@@ -61,8 +61,25 @@ for ids in playerDict:
         thirdBase[ids] = playerDict[ids]
 
 
-print(len(outfielders))
-print(len(pitchers))
+def positionFilter(positionDict):
+    filteredDict = {}
+    for player in positionDict:
+        if positionDict[player][3] not in filteredDict:
+            filteredDict[positionDict[player][3]] = positionDict[player]
+        else:
+            if positionDict[player][2] > filteredDict[positionDict[player][3]][2]:
+                filteredDict[positionDict[player][3]] = positionDict[player]
+    return filteredDict
+
+
+print(len(positionFilter(firstBase)))
+print(len(positionFilter(secondBase)))
+print(len(positionFilter(thirdBase)))
+print(len(positionFilter(shortStop)))
+print(len(positionFilter(pitchers)))
+print(len(positionFilter(catchers)))
+
+
 outfielderGroups = list(itertools.combinations(outfielders, 3))
 
 allLineups = list(itertools.product(outfielderGroups, pitchers, catchers, firstBase, secondBase, shortStop, thirdBase))
