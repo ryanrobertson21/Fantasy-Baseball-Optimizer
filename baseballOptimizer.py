@@ -80,6 +80,20 @@ print(len(positionFilter(pitchers)))
 print(len(positionFilter(catchers)))
 
 
+def filterMoreExpensiveLessPP(positionDict):
+    salariesToDelete = set()
+
+    for salary in positionDict:
+        for otherSalaries in positionDict:
+            if salary < otherSalaries and positionDict[salary][2] >= positionDict[otherSalaries][2]:
+                salariesToDelete.add(otherSalaries)
+
+    for item in salariesToDelete:
+        del positionDict[item]
+
+    return positionDict
+
+
 outfielderGroups = list(itertools.combinations(outfielders, 3))
 
 allLineups = list(itertools.product(outfielderGroups, pitchers, catchers, firstBase, secondBase, shortStop, thirdBase))
