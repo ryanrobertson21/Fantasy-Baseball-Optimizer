@@ -55,5 +55,30 @@ outfielderGroups = list(itertools.combinations(outfielders, 3))
 
 allLineups = list(itertools.product(outfielderGroups, pitchers, catchers, firstBase, secondBase, shortStop, thirdBase))
 
-print(len(allLineups))
-print(thirdBase)
+underCap = {}
+for lineup in allLineups:
+    salary = 0
+    projectedPoints = 0
+    for item in lineup:
+        if type(item) == tuple:
+            for of in item:
+                salary += playerDict[of][3]
+                projectedPoints += playerDict[of][2]
+        else:
+            salary += playerDict[item][3]
+            projectedPoints += playerDict[item][2]
+    if salary <= 35000:
+        underCap[projectedPoints] = lineup
+
+
+pp = max(underCap)
+optimalLineup = underCap[pp]
+capUsed = 0
+for item in optimalLineup:
+    if type(item) == tuple:
+        for of in item:
+            capUsed += playerDict[of][3]
+            print(playerDict[of][0] + ": " + playerDict[of][1])
+    else:
+        capUsed += playerDict[item][3]
+        print(playerDict[item][0] + ": " + playerDict[item][1])
