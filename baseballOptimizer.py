@@ -1,4 +1,4 @@
-import csv, itertools
+import csv, itertools, copy
 from collections import Counter
 from poolReducer import poolReducer
 
@@ -62,6 +62,8 @@ for ids in playerDict:
         thirdBase[ids] = playerDict[ids]
 
 
+
+
 def positionFilter(positionDict):
     filteredDict = {}
     for player in positionDict:
@@ -71,28 +73,6 @@ def positionFilter(positionDict):
             if positionDict[player][2] > filteredDict[positionDict[player][3]][2]:
                 filteredDict[positionDict[player][3]] = positionDict[player]
     return filteredDict
-
-
-print(len(positionFilter(firstBase)))
-print(len(positionFilter(secondBase)))
-print(len(positionFilter(thirdBase)))
-print(len(positionFilter(shortStop)))
-print(len(positionFilter(pitchers)))
-print(len(positionFilter(catchers)))
-
-
-def filterMoreExpensiveLessPP(positionDict):
-    salariesToDelete = set()
-
-    for salary in positionDict:
-        for otherSalaries in positionDict:
-            if salary < otherSalaries and positionDict[salary][2] >= positionDict[otherSalaries][2]:
-                salariesToDelete.add(otherSalaries)
-
-    for item in salariesToDelete:
-        del positionDict[item]
-
-    return positionDict
 
 
 def ofPositionFilter(positionDict):
@@ -119,6 +99,58 @@ def ofPositionFilter(positionDict):
                     playersWithSameSalary.remove(lowestPP)
 
     return positionDict
+
+
+def filterMoreExpensiveLessPP(positionDict):
+    salariesToDelete = set()
+
+    for salary in positionDict:
+        for otherSalaries in positionDict:
+            if salary < otherSalaries and positionDict[salary][2] >= positionDict[otherSalaries][2]:
+                salariesToDelete.add(otherSalaries)
+
+    for item in salariesToDelete:
+        del positionDict[item]
+
+    return positionDict
+
+
+def ofFilterMoreExpensiveLessPP(positionDict):
+    outfielderList = []
+    for key in positionDict:
+        playerEntry = []
+        playerEntry.append(key)
+        for info in positionDict[key]:
+            playerEntry.append(info)
+        outfielderList.append(playerEntry)
+
+    outfielderListSalaryOrder = sorted(outfielderList, key=lambda x: (x[4], x[3] * -1))
+
+    lowestSalaryOutfielders = outfielderListSalaryOrder[0:3]
+    count = 1
+    while 2 + count < len(outfielderListSalaryOrder) - 1:
+
+        minProjectedPoints = min(lowestSalaryOutfielders, key=lambda x: x[3])
+
+        outfieldersToDelete = []
+        for of in outfielderListSalaryOrder[2 + count:]:
+            if of[3] < minProjectedPoints[3] and of[4] > minProjectedPoints[4]:
+                outfieldersToDelete.append(of)
+
+        outfielderListSalaryOrder = [x for x in outfielderListSalaryOrder if x not in outfieldersToDelete]
+
+        lowestSalaryOutfielders.remove(minProjectedPoints)
+
+        try:
+            lowestSalaryOutfielders.append(outfielderListSalaryOrder[2 + count])
+        except IndexError:
+            break
+
+        count += 1
+
+    return outfielderListSalaryOrder
+
+
 
 
 outfielderGroups = list(itertools.combinations(outfielders, 3))
