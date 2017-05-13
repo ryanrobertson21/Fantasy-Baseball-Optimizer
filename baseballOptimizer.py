@@ -112,7 +112,10 @@ def filterMoreExpensiveLessPP(positionDict):
     for item in salariesToDelete:
         del positionDict[item]
 
-    return positionDict
+    filteredDict = {}
+    for key in positionDict:
+        filteredDict[positionDict[key][-1]] = positionDict[key]
+    return filteredDict
 
 
 def ofFilterMoreExpensiveLessPP(positionDict):
