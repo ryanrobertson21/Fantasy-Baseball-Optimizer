@@ -183,3 +183,16 @@ for key in underCap:
 
 pp = max(underCapPP)
 optimalLineup = underCapPP[pp]
+
+capUsed = 0
+for item in optimalLineup:
+    if type(item) == tuple:
+        for of in item:
+            capUsed += of[4]
+            print(of[1] + ": " + of[2] + ' PP: ' + str(round(of[3], 2)) + ' Cost: ' + str(of[4]))
+    else:
+        capUsed += playerDict[item][3]
+        print(playerDict[item][0] + ": " + playerDict[item][1] + ' PP: ' + str(round(playerDict[item][2], 2)) + ' Cost: ' + str(playerDict[item][3]))
+
+print("Cap Used: $" + str(capUsed))
+print("Projected Points: " + str(round(pp, 2)))
