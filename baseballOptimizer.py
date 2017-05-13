@@ -1,4 +1,5 @@
 import csv, itertools
+from collections import Counter
 from poolReducer import poolReducer
 
 lineupSpreadsheet = open('/Users/RyanRobertson21/Desktop/baseballData.csv')
@@ -90,6 +91,32 @@ def filterMoreExpensiveLessPP(positionDict):
 
     for item in salariesToDelete:
         del positionDict[item]
+
+    return positionDict
+
+
+def ofPositionFilter(positionDict):
+    outfielderSalaries = []
+    for of in positionDict:
+        outfielderSalaries.append(positionDict[of][3])
+
+    ofSalaryCounts = Counter(outfielderSalaries)
+
+    outfielderSalariesToFilter = {k: v for k, v in ofSalaryCounts.items() if v > 3}
+
+    for salary in outfielderSalariesToFilter:
+        playersWithSameSalary = []
+        for of in positionDict:
+            if positionDict[of][3] == salary:
+                playersWithSameSalary.append(positionDict[of][2])
+
+        ofCopy = copy.deepcopy(positionDict)
+        for num in range(outfielderSalariesToFilter[salary] - 3):
+            lowestPP = min(playersWithSameSalary)
+            for of in ofCopy:
+                if ofCopy[of][2] == lowestPP:
+                    del positionDict[of]
+                    playersWithSameSalary.remove(lowestPP)
 
     return positionDict
 
