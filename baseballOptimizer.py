@@ -61,15 +61,16 @@ for ids in playerDict:
         outfielders[ids] = playerDict[ids]
 
 
-
 def positionFilter(positionDict):
     filteredDict = {}
     for player in positionDict:
         if positionDict[player][3] not in filteredDict:
             filteredDict[positionDict[player][3]] = positionDict[player]
+            filteredDict[positionDict[player][3]].append(player)
         else:
             if positionDict[player][2] > filteredDict[positionDict[player][3]][2]:
                 filteredDict[positionDict[player][3]] = positionDict[player]
+                filteredDict[positionDict[player][3]].append(player)
     return filteredDict
 
 
