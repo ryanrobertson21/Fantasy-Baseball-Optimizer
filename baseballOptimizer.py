@@ -170,15 +170,16 @@ for lineup in allLineups:
         underCap[count] = lineup
         count += 1
 
+underCapPP = {}
+for key in underCap:
+    projectedPoints = 0
+    for item in underCap[key]:
+        if type(item) == tuple:
+            for of in item:
+                projectedPoints += of[3]
+        else:
+            projectedPoints += playerDict[item][2]
+    underCapPP[projectedPoints] = underCap[key]
 
-pp = max(underCap)
-optimalLineup = underCap[pp]
-capUsed = 0
-for item in optimalLineup:
-    if type(item) == tuple:
-        for of in item:
-            capUsed += playerDict[of][3]
-            print(playerDict[of][0] + ": " + playerDict[of][1])
-    else:
-        capUsed += playerDict[item][3]
-        print(playerDict[item][0] + ": " + playerDict[item][1])
+pp = max(underCapPP)
+optimalLineup = underCapPP[pp]
