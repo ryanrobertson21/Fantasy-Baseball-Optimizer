@@ -74,6 +74,7 @@ def positionFilter(positionDict):
     return filteredDict
 
 
+
 def ofPositionFilter(positionDict):
     outfielderSalaries = []
     for of in positionDict:
@@ -93,7 +94,7 @@ def ofPositionFilter(positionDict):
         for num in range(outfielderSalariesToFilter[salary] - 3):
             lowestPP = min(playersWithSameSalary)
             for of in ofCopy:
-                if ofCopy[of][2] == lowestPP:
+                if ofCopy[of][2] == lowestPP and ofCopy[of][3] == salary:
                     del positionDict[of]
                     playersWithSameSalary.remove(lowestPP)
 
