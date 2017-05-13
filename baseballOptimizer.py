@@ -4,6 +4,8 @@ from poolReducer import poolReducer
 
 lineupSpreadsheet = open('/Users/RyanRobertson21/Desktop/baseballData.csv')
 lineupReader = csv.reader(lineupSpreadsheet)
+
+print('Reading in Data...')
 playerDict = {}
 
 for row in lineupReader:
@@ -22,13 +24,17 @@ for row in lineupReader:
 
 lineupSpreadsheet.close()
 
-outfielders = {}
-for ids in playerDict:
-    if playerDict[ids][0] == 'OF':
-        outfielders[ids] = playerDict[ids]
-
+print('Filling in Position Dictionaries...')
 pitchers = {}
+catchers = {}
+firstBase = {}
+secondBase = {}
+thirdBase = {}
+shortStop = {}
+outfielders = {}
+
 for ids in playerDict:
+
     if playerDict[ids][0] == 'P':
         try:
             if playerDict[ids][4] == 'Yes':
@@ -36,31 +42,23 @@ for ids in playerDict:
         except IndexError:
             pass
 
-catchers = {}
-for ids in playerDict:
-    if playerDict[ids][0] == 'C':
+    elif playerDict[ids][0] == 'C':
         catchers[ids] = playerDict[ids]
 
-firstBase = {}
-for ids in playerDict:
-    if playerDict[ids][0] == '1B':
+    elif playerDict[ids][0] == '1B':
         firstBase[ids] = playerDict[ids]
 
-secondBase = {}
-for ids in playerDict:
-    if playerDict[ids][0] == '2B':
+    elif playerDict[ids][0] == '2B':
         secondBase[ids] = playerDict[ids]
 
-shortStop = {}
-for ids in playerDict:
-    if playerDict[ids][0] == 'SS':
-        shortStop[ids] = playerDict[ids]
-
-thirdBase = {}
-for ids in playerDict:
-    if playerDict[ids][0] == '3B':
+    elif playerDict[ids][0] == '3B':
         thirdBase[ids] = playerDict[ids]
 
+    elif playerDict[ids][0] == 'SS':
+        shortStop[ids] = playerDict[ids]
+
+    elif playerDict[ids][0] == 'OF':
+        outfielders[ids] = playerDict[ids]
 
 
 
