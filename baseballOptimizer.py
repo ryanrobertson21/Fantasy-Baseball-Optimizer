@@ -2,7 +2,7 @@ import csv, itertools, copy
 from collections import Counter
 from poolReducer import poolReducer
 
-lineupSpreadsheet = open('/Users/RyanRobertson21/Desktop/baseballData.csv')
+lineupSpreadsheet = open('/Users/RyanRobertson21/Desktop/newTest.csv')
 lineupReader = csv.reader(lineupSpreadsheet)
 
 print('Reading in Data...')
@@ -59,6 +59,17 @@ for ids in playerDict:
 
     elif playerDict[ids][0] == 'OF':
         outfielders[ids] = playerDict[ids]
+
+
+print('AFTER LOADING IN THE DATA...')
+print('Pitchers: ' + str(len(pitchers)))
+print('Catchers: ' + str(len(catchers)))
+print('FirstBase: ' + str(len(firstBase)))
+print('SecondBase: ' + str(len(secondBase)))
+print('ThirdBase: ' + str(len(thirdBase)))
+print('ShortStop: ' + str(len(shortStop)))
+print('Outfielders: ' + str(len(outfielders)))
+
 
 
 def positionFilter(positionDict):
@@ -154,12 +165,39 @@ def ofFilterMoreExpensiveLessPP(positionDict):
     return outfielderListSalaryOrder
 
 
+print('AFTER FIRST FILTER!')
+print(len(positionFilter(pitchers)))
+print(len(positionFilter(catchers)))
+print(len(positionFilter(firstBase)))
+print(len(positionFilter(secondBase)))
+print(len(positionFilter(thirdBase)))
+print(len(positionFilter(shortStop)))
+print(len(ofPositionFilter(outfielders)))
+
+pitchers = filterMoreExpensiveLessPP(positionFilter(pitchers))
+catchers = filterMoreExpensiveLessPP(positionFilter(catchers))
+firstBase = filterMoreExpensiveLessPP(positionFilter(firstBase))
+secondBase = filterMoreExpensiveLessPP(positionFilter(secondBase))
+thirdBase = filterMoreExpensiveLessPP(positionFilter(thirdBase))
+shortStop = filterMoreExpensiveLessPP(positionFilter(shortStop))
+outfielders = ofFilterMoreExpensiveLessPP(ofPositionFilter(outfielders))
+
+
+print('AFTER BOTH FILTERS...')
+print('Pitchers: ' + str(len(pitchers)))
+print('Catchers: ' + str(len(catchers)))
+print('FirstBase: ' + str(len(firstBase)))
+print('SecondBase: ' + str(len(secondBase)))
+print('ThirdBase: ' + str(len(thirdBase)))
+print('ShortStop: ' + str(len(shortStop)))
+print('Outfielders: ' + str(len(outfielders)))
 
 
 outfielderGroups = list(itertools.combinations(outfielders, 3))
+print(len(outfielderGroups))
 
-allLineups = list(itertools.product(outfielderGroups, pitchers, catchers, firstBase, secondBase, shortStop, thirdBase))
-
+allLineups = list(itertools.product(pitchers, catchers, firstBase, secondBase, thirdBase, shortStop, outfielderGroups))
+print(len(allLineups))
 
 underCap = {}
 count = 1
@@ -175,6 +213,8 @@ for lineup in allLineups:
         underCap[count] = lineup
         count += 1
 
+print(len(underCap))
+
 underCapPP = {}
 for key in underCap:
     projectedPoints = 0
@@ -188,6 +228,8 @@ for key in underCap:
 
 pp = max(underCapPP)
 optimalLineup = underCapPP[pp]
+print(pp)
+print(optimalLineup)
 
 capUsed = 0
 for item in optimalLineup:
