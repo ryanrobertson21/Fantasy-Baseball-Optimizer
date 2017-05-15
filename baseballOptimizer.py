@@ -1,16 +1,38 @@
-import csv, itertools, copy
+import csv, itertools, copy, time, os
 from collections import Counter
+from selenium import webdriver
 from poolReducer import poolReducer
 
-lineupSpreadsheet = open('/Users/RyanRobertson21/Desktop/newTest.csv')
-lineupReader = csv.reader(lineupSpreadsheet)
+contestLineup = csv.reader(open('/Users/RyanRobertson21/Desktop/FD_5-14.csv'))
+
+
+name = str(time.asctime(time.localtime(time.time()))).replace(':', '_')
+folderName = '/Users/RyanRobertson21/Desktop/FD-' + name
+os.makedirs(folderName)
+
+profile = webdriver.FirefoxProfile()
+profile.set_preference('browser.download.folderList', 2)
+profile.set_preference('browser.download.manager.showWhenStarting', False)
+profile.set_preference('browser.download.dir', folderName)
+profile.set_preference('browser.helperApps.neverAsk.saveToDisk', 'text/csv')
+
+
+browser = webdriver.Firefox(profile)
+browser.get('http://www.fangraphs.com/dailyprojections.aspx?pos=all&stats=bat&type=sabersim&team=0&lg=all&players=0')
+linkElem = browser.find_element_by_link_text('Export Data')
+linkElem.click()
+
+time.sleep(10)
+ppInfieldersLineup = csv.reader(open(folderName + "/FanGraphs Leaderboard.csv"))
+
+
 
 print('Reading in Data...')
 playerDict = {}
-
-for row in lineupReader:
+#DON'T FORGET PITCHERS IS A SEPERATE SPREADSHEET, NEED TO ADD THEM TOO!
+for row in contestLineup:
     playerList = []
-    if lineupReader.line_num == 1:
+    if contestLineup.line_num == 1:
         continue
     playerList.append(row[1])
     playerList.append(row[3])
@@ -22,7 +44,10 @@ for row in lineupReader:
         pass
     playerDict[row[0]] = playerList
 
-lineupSpreadsheet.close()
+contestLineup.close()
+ppInfieldersLineup.close()
+
+
 
 print('Filling in Position Dictionaries...')
 pitchers = {}
