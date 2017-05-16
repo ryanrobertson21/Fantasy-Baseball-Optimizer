@@ -1,55 +1,154 @@
-import csv, itertools, copy, time, os
+import csv, itertools, copy, time, os, re
 from collections import Counter
 from selenium import webdriver
 from poolReducer import poolReducer
 
-contestLineup = csv.reader(open('/Users/RyanRobertson21/Desktop/FD_5-14.csv'))
+teamNames = {
+'LAA' : 'Angels',
+'HOU' : 'Astros',
+'OAK' : 'Athletics',
+'TOR' : 'Blue Jays',
+'ATL' : 'Braves',
+'MIL' : 'Brewers',
+'STL' : 'Cardinals',
+'CHC' : 'Cubs',
+'ARI' : 'Diamondbacks',
+'LOS' : 'Dodgers',
+'SFG' : 'Giants',
+'CLE' : 'Indians',
+'SEA' : 'Mariners',
+'MIA' : 'Marlins',
+'NYM' : 'Mets',
+'WAS' : 'Nationals',
+'BAL' : 'Orioles',
+'SDP' : 'Padres',
+'PHI' : 'Phillies',
+'PIT' : 'Pirates',
+'TEX' : 'Rangers',
+'TAM' : 'Rays',
+'BOS' : 'Red Sox',
+'CIN' : 'Reds',
+'COL' : 'Rockies',
+'KAN' : 'Royals',
+'DET' : 'Tigers',
+'MIN' : 'Twins',
+'CWS' : 'White Sox',
+'NYY' : 'Yankees'
+}
 
+urlBat = 'http://www.fangraphs.com/dailyprojections.aspx?pos=all&stats=bat&type=sabersim&team=0&lg=all&players=0'
+urlPit = 'http://www.fangraphs.com/dailyprojections.aspx?pos=all&stats=pit&type=sabersim&team=0&lg=all&players=0'
+batFolderPath = '/Users/RyanRobertson21/Desktop/battersPP-'
+pitFolderPath = '/Users/RyanRobertson21/Desktop/pitchersPP-'
 
-name = str(time.asctime(time.localtime(time.time()))).replace(':', '_')
-folderName = '/Users/RyanRobertson21/Desktop/FD-' + name
-os.makedirs(folderName)
+def downloadPP(folderPath, url):
+    name = str(time.asctime(time.localtime(time.time()))).replace(':', '_')
+    folderPath = folderPath + name
+    os.makedirs(folderPath)
 
-profile = webdriver.FirefoxProfile()
-profile.set_preference('browser.download.folderList', 2)
-profile.set_preference('browser.download.manager.showWhenStarting', False)
-profile.set_preference('browser.download.dir', folderName)
-profile.set_preference('browser.helperApps.neverAsk.saveToDisk', 'text/csv')
+    profile = webdriver.FirefoxProfile()
+    profile.set_preference('browser.download.folderList', 2)
+    profile.set_preference('browser.download.manager.showWhenStarting', False)
+    profile.set_preference('browser.download.dir', folderPath)
+    profile.set_preference('browser.helperApps.neverAsk.saveToDisk', 'text/csv')
 
+    browser = webdriver.Firefox(profile)
+    browser.get(url)
+    linkElem = browser.find_element_by_link_text('Export Data')
+    linkElem.click()
+    time.sleep(5)
+    with open(folderPath + '/FanGraphs Leaderboard.csv') as ss:
+        ppLineup = list(csv.reader(ss))[1:]
+    browser.quit()
+    # delete spreadsheet folder here, probably after a pause?
+    return ppLineup
 
-browser = webdriver.Firefox(profile)
-browser.get('http://www.fangraphs.com/dailyprojections.aspx?pos=all&stats=bat&type=sabersim&team=0&lg=all&players=0')
-linkElem = browser.find_element_by_link_text('Export Data')
-linkElem.click()
+battersPP = downloadPP(batFolderPath, urlBat)
+time.sleep(5)
+pitchersPP = downloadPP(pitFolderPath, urlPit)
 
-time.sleep(10)
-ppInfieldersLineup = csv.reader(open(folderName + "/FanGraphs Leaderboard.csv"))
+# to test when PP is not updated yet
+contestLineup = list(csv.reader(open('/Users/RyanRobertson21/Desktop/FD_5-16.csv')))[1:]
+# battersPP = list(csv.reader(open('/Users/RyanRobertson21/Desktop/battersPP-Tue May 16 18_17_23 2017/FanGraphs Leaderboard.csv')))[1:]
+# pitchersPP = list(csv.reader(open('/Users/RyanRobertson21/Desktop/pitchersPP-Tue May 16 18_17_56 2017/FanGraphs Leaderboard.csv')))[1:]
 
+def editPlayerName(elementName, rowIndex):
+    fullName = elementName[rowIndex].lower().replace(".", "").replace(" jr", "").split(' ', 1)
+    firstName = fullName[0]
+    if len(firstName) > 2:
+        firstName = firstName[:3]
+    lastName = fullName[1]
+    name = firstName + " " + lastName
+    removeInitial = re.compile(r' \w ').search(name)
+    if removeInitial:
+        name = name.replace(removeInitial.group(), ' ')
+    return name
 
-
-print('Reading in Data...')
+playerNamesToCheck = []
 playerDict = {}
-#DON'T FORGET PITCHERS IS A SEPERATE SPREADSHEET, NEED TO ADD THEM TOO!
+
+
+
 for row in contestLineup:
-    playerList = []
-    if contestLineup.line_num == 1:
-        continue
-    playerList.append(row[1])
-    playerList.append(row[3])
-    playerList.append(float(row[5]))
-    playerList.append(int(row[7]))
-    try:
-        playerList.append(row[13])
-    except IndexError:
-        pass
-    playerDict[row[0]] = playerList
+    for ppRow in battersPP:
+        fdName = editPlayerName(row, 3)
+        ppName = editPlayerName(ppRow, 0)
 
-contestLineup.close()
-ppInfieldersLineup.close()
+        if fdName == ppName and row[1] != 'P' and (teamNames[row[9]] == ppRow[1] or ppRow[1] == ''):
+            playerList = []
+            playerList.append(row[1])
+            playerList.append(row[3])
+            playerList.append(float(ppRow[-3]))
+            playerList.append(int(row[7]))
+            playerDict[row[0]] = playerList
+            playerNamesToCheck.append(fdName)
 
 
+for row in contestLineup:
+    for ppRow in pitchersPP:
+        fdName = editPlayerName(row, 3)
+        ppName = editPlayerName(ppRow, 0)
 
-print('Filling in Position Dictionaries...')
+        if fdName == ppName and row[1] == 'P' and (teamNames[row[9]] == ppRow[1] or ppRow[1] == ''):
+            playerList = []
+            playerList.append(row[1])
+            playerList.append(row[3])
+            playerList.append(float(ppRow[-3]))
+            playerList.append(int(row[7]))
+            playerDict[row[0]] = playerList
+            playerNamesToCheck.append(fdName)
+
+# Used to test to make sure players are being read in from Fangraphs pitchers and Fangraphs batters spreadsheets, as well
+# as FanDuels total lineup spreadsheet. Works best when no games have started yet, otherwise players in games that have started
+# are no longer eligibile to be selected for the contest in Fanduel. So while they will appear in the projected poitns spreadsheet
+# they wont, and shouldn't appear on fanduel, and thus wont be read in.
+# print('\nBatters missing from PP\n')
+# for ppRow in battersPP:
+#     ppName = editPlayerName(ppRow, 0)
+#
+#     if ppName not in playerNamesToCheck:
+#         print(ppName)
+#
+# print('\nPitchers missing from PP\n')
+# for ppRow in pitchersPP:
+#     ppName = editPlayerName(ppRow, 0)
+#
+#     if ppName not in playerNamesToCheck:
+#         print(ppName)
+# print('\nPlayer missing from FanDuel\n')
+# for row in contestLineup:
+#     fdName = editPlayerName(row, 3)
+#
+#     if fdName not in playerNamesToCheck:
+#         print(fdName, row[1])
+
+print('Player Dict Info')
+print(len(playerDict))
+
+
+
+
+print('\nFilling in Position Dictionaries...')
 pitchers = {}
 catchers = {}
 firstBase = {}
@@ -61,11 +160,7 @@ outfielders = {}
 for ids in playerDict:
 
     if playerDict[ids][0] == 'P':
-        try:
-            if playerDict[ids][4] == 'Yes':
-                pitchers[ids] = playerDict[ids]
-        except IndexError:
-            pass
+        pitchers[ids] = playerDict[ids]
 
     elif playerDict[ids][0] == 'C':
         catchers[ids] = playerDict[ids]
@@ -85,8 +180,7 @@ for ids in playerDict:
     elif playerDict[ids][0] == 'OF':
         outfielders[ids] = playerDict[ids]
 
-
-print('AFTER LOADING IN THE DATA...')
+print('\nAFTER LOADING IN THE DATA...')
 print('Pitchers: ' + str(len(pitchers)))
 print('Catchers: ' + str(len(catchers)))
 print('FirstBase: ' + str(len(firstBase)))
@@ -190,14 +284,14 @@ def ofFilterMoreExpensiveLessPP(positionDict):
     return outfielderListSalaryOrder
 
 
-print('AFTER FIRST FILTER!')
-print(len(positionFilter(pitchers)))
-print(len(positionFilter(catchers)))
-print(len(positionFilter(firstBase)))
-print(len(positionFilter(secondBase)))
-print(len(positionFilter(thirdBase)))
-print(len(positionFilter(shortStop)))
-print(len(ofPositionFilter(outfielders)))
+print('\nAFTER FIRST FILTER!')
+print('Pitchers: ' + str(len(positionFilter(pitchers))))
+print('Catchers: ' + str(len(positionFilter(catchers))))
+print('FirstBase: ' + str(len(positionFilter(firstBase))))
+print('SecondBase: ' + str(len(positionFilter(secondBase))))
+print('ThirdBase: ' + str(len(positionFilter(thirdBase))))
+print('ShortStop: ' + str(len(positionFilter(shortStop))))
+print('Outfielders: ' + str(len(ofPositionFilter(outfielders))))
 
 pitchers = filterMoreExpensiveLessPP(positionFilter(pitchers))
 catchers = filterMoreExpensiveLessPP(positionFilter(catchers))
@@ -208,7 +302,7 @@ shortStop = filterMoreExpensiveLessPP(positionFilter(shortStop))
 outfielders = ofFilterMoreExpensiveLessPP(ofPositionFilter(outfielders))
 
 
-print('AFTER BOTH FILTERS...')
+print('\nAFTER BOTH FILTERS...')
 print('Pitchers: ' + str(len(pitchers)))
 print('Catchers: ' + str(len(catchers)))
 print('FirstBase: ' + str(len(firstBase)))
@@ -217,12 +311,12 @@ print('ThirdBase: ' + str(len(thirdBase)))
 print('ShortStop: ' + str(len(shortStop)))
 print('Outfielders: ' + str(len(outfielders)))
 
-
+start = time.time()
 outfielderGroups = list(itertools.combinations(outfielders, 3))
-print(len(outfielderGroups))
+print("\nNumber of oufielder combinations: " + str(len(outfielderGroups)))
 
 allLineups = list(itertools.product(pitchers, catchers, firstBase, secondBase, thirdBase, shortStop, outfielderGroups))
-print(len(allLineups))
+print("\nNumber of possibly optimal lineups: " + str(len(allLineups)))
 
 underCap = {}
 count = 1
@@ -238,7 +332,7 @@ for lineup in allLineups:
         underCap[count] = lineup
         count += 1
 
-print(len(underCap))
+print("\nNumber of possibly optimal lineups under the cap: " + str(len(underCap))+"\n")
 
 underCapPP = {}
 for key in underCap:
@@ -253,8 +347,7 @@ for key in underCap:
 
 pp = max(underCapPP)
 optimalLineup = underCapPP[pp]
-print(pp)
-print(optimalLineup)
+
 
 capUsed = 0
 for item in optimalLineup:
@@ -266,5 +359,8 @@ for item in optimalLineup:
         capUsed += playerDict[item][3]
         print(playerDict[item][0] + ": " + playerDict[item][1] + ' PP: ' + str(round(playerDict[item][2], 2)) + ' Cost: ' + str(playerDict[item][3]))
 
-print("Cap Used: $" + str(capUsed))
+print("\nCap Used: $" + str(capUsed))
 print("Projected Points: " + str(round(pp, 2)))
+
+end = time.time()
+print("\nRuntime from outfielderGroups calculation til end of program: " + str(end-start) + " seconds.")
