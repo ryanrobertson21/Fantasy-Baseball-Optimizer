@@ -1,4 +1,4 @@
-import csv, itertools, copy, time, os, re
+import csv, itertools, copy, time, os, re, shutil
 from collections import Counter
 from selenium import webdriver
 from poolReducer import poolReducer
@@ -38,10 +38,14 @@ teamNames = {
 
 urlBat = 'http://www.fangraphs.com/dailyprojections.aspx?pos=all&stats=bat&type=sabersim&team=0&lg=all&players=0'
 urlPit = 'http://www.fangraphs.com/dailyprojections.aspx?pos=all&stats=pit&type=sabersim&team=0&lg=all&players=0'
+urlFanDuel = 'https://www.fanduel.com/games/19327/contests/19327-209469721/enter'
+# urlFanDuel should be user input on website
+
 batFolderPath = '/Users/RyanRobertson21/Desktop/battersPP-'
 pitFolderPath = '/Users/RyanRobertson21/Desktop/pitchersPP-'
+fanDuelFolderPath = '/Users/RyanRobertson21/Desktop/fanDuel-'
 
-def downloadPP(folderPath, url):
+def downloadData(folderPath, url, linkTextString):
     name = str(time.asctime(time.localtime(time.time()))).replace(':', '_')
     folderPath = folderPath + name
     os.makedirs(folderPath)
@@ -54,21 +58,25 @@ def downloadPP(folderPath, url):
 
     browser = webdriver.Firefox(profile)
     browser.get(url)
-    linkElem = browser.find_element_by_link_text('Export Data')
+    linkElem = browser.find_element_by_link_text(linkTextString)
     linkElem.click()
     time.sleep(5)
-    with open(folderPath + '/FanGraphs Leaderboard.csv') as ss:
-        ppLineup = list(csv.reader(ss))[1:]
+    for file in os.listdir(folderPath):
+        filePath = folderPath + '/' + file
+    with open(filePath) as spreadSheetFile:
+        dataList = list(csv.reader(spreadSheetFile))[1:]
     browser.quit()
-    # delete spreadsheet folder here, probably after a pause?
-    return ppLineup
+    shutil.rmtree(folderPath)
+    return dataList
 
-battersPP = downloadPP(batFolderPath, urlBat)
-time.sleep(5)
-pitchersPP = downloadPP(pitFolderPath, urlPit)
+battersPP = downloadData(batFolderPath, urlBat, 'Export Data')
+time.sleep(3)
+pitchersPP = downloadData(pitFolderPath, urlPit, 'Export Data')
+time.sleep(3)
+contestLineup = downloadData(fanDuelFolderPath, urlFanDuel, 'Download players list')
 
 # to test when PP is not updated yet
-contestLineup = list(csv.reader(open('/Users/RyanRobertson21/Desktop/FD_5-16.csv')))[1:]
+# contestLineup = list(csv.reader(open('/Users/RyanRobertson21/Desktop/FD_5-16.csv')))[1:]
 # battersPP = list(csv.reader(open('/Users/RyanRobertson21/Desktop/battersPP-Tue May 16 18_17_23 2017/FanGraphs Leaderboard.csv')))[1:]
 # pitchersPP = list(csv.reader(open('/Users/RyanRobertson21/Desktop/pitchersPP-Tue May 16 18_17_56 2017/FanGraphs Leaderboard.csv')))[1:]
 
@@ -317,7 +325,7 @@ print("\nNumber of oufielder combinations: " + str(len(outfielderGroups)))
 
 allLineups = list(itertools.product(pitchers, catchers, firstBase, secondBase, thirdBase, shortStop, outfielderGroups))
 print("\nNumber of possibly optimal lineups: " + str(len(allLineups)))
-
+print(allLineups[2])
 underCap = {}
 count = 1
 for lineup in allLineups:
