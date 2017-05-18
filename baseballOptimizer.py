@@ -370,6 +370,7 @@ optimalLineup = underCapPP[pp]
 capUsed = 0
 for item in optimalLineup:
     if type(item) == tuple:
+        item = sorted(item, key=lambda x: (x[4] * -1, x[3] * -1))
         for of in item:
             capUsed += of[4]
             print(of[1] + ": " + of[2] + ' PP: ' + str(round(of[3], 2)) + ' Cost: {:,d}'.format(of[4]))
