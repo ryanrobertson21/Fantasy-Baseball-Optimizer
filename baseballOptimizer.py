@@ -38,7 +38,7 @@ teamNames = {
 
 urlBat = 'http://www.fangraphs.com/dailyprojections.aspx?pos=all&stats=bat&type=sabersim&team=0&lg=all&players=0'
 urlPit = 'http://www.fangraphs.com/dailyprojections.aspx?pos=all&stats=pit&type=sabersim&team=0&lg=all&players=0'
-urlFanDuel = 'https://www.fanduel.com/games/19327/contests/19327-209469721/enter'
+urlFanDuel = 'https://www.fanduel.com/games/19342/contests/19342-209510202/enter'
 # urlFanDuel should be user input on website
 
 batFolderPath = '/Users/RyanRobertson21/Desktop/battersPP-'
@@ -66,15 +66,25 @@ def downloadData(folderPath, url, linkTextString):
     with open(filePath) as spreadSheetFile:
         dataList = list(csv.reader(spreadSheetFile))[1:]
     browser.quit()
-    shutil.rmtree(folderPath)
+    # KEEP FOR NOW TO CHECK DATA shutil.rmtree(folderPath)
     return dataList
-
+s1= time.time()
+print('Downloading batters data from FanGraphs...')
 battersPP = downloadData(batFolderPath, urlBat, 'Export Data')
+e1 = time.time()
+print(e1-s1)
 time.sleep(3)
+s2 = time.time()
+print('\nDownloading pitchers data from FanGraphs...')
 pitchersPP = downloadData(pitFolderPath, urlPit, 'Export Data')
+e2 = time.time()
+print(e2-s2)
 time.sleep(3)
+s3 = time.time()
+print('\nDownloading contest data from FanDuel...')
 contestLineup = downloadData(fanDuelFolderPath, urlFanDuel, 'Download players list')
-
+e3 = time.time()
+print(e3-s3)
 # to test when PP is not updated yet
 # contestLineup = list(csv.reader(open('/Users/RyanRobertson21/Desktop/FD_5-16.csv')))[1:]
 # battersPP = list(csv.reader(open('/Users/RyanRobertson21/Desktop/battersPP-Tue May 16 18_17_23 2017/FanGraphs Leaderboard.csv')))[1:]
@@ -150,7 +160,7 @@ for row in contestLineup:
 #     if fdName not in playerNamesToCheck:
 #         print(fdName, row[1])
 
-print('Player Dict Info')
+print('\nPlayer Dict Info')
 print(len(playerDict))
 
 
@@ -321,10 +331,10 @@ print('Outfielders: ' + str(len(outfielders)))
 
 start = time.time()
 outfielderGroups = list(itertools.combinations(outfielders, 3))
-print("\nNumber of oufielder combinations: " + str(len(outfielderGroups)))
+print("\nNumber of oufielder combinations: {:,d}".format(len(outfielderGroups)))
 
 allLineups = list(itertools.product(pitchers, catchers, firstBase, secondBase, thirdBase, shortStop, outfielderGroups))
-print("\nNumber of possibly optimal lineups: " + str(len(allLineups)))
+print("\nNumber of possibly optimal lineups: {:,d}".format(len(allLineups)))
 print(allLineups[2])
 underCap = {}
 count = 1
@@ -340,7 +350,7 @@ for lineup in allLineups:
         underCap[count] = lineup
         count += 1
 
-print("\nNumber of possibly optimal lineups under the cap: " + str(len(underCap))+"\n")
+print("\nNumber of possibly optimal lineups under the cap: {:,d}\n".format(len(underCap)))
 
 underCapPP = {}
 for key in underCap:
@@ -362,12 +372,12 @@ for item in optimalLineup:
     if type(item) == tuple:
         for of in item:
             capUsed += of[4]
-            print(of[1] + ": " + of[2] + ' PP: ' + str(round(of[3], 2)) + ' Cost: ' + str(of[4]))
+            print(of[1] + ": " + of[2] + ' PP: ' + str(round(of[3], 2)) + ' Cost: {:,d}'.format(of[4]))
     else:
         capUsed += playerDict[item][3]
-        print(playerDict[item][0] + ": " + playerDict[item][1] + ' PP: ' + str(round(playerDict[item][2], 2)) + ' Cost: ' + str(playerDict[item][3]))
+        print(playerDict[item][0] + ": " + playerDict[item][1] + ' PP: ' + str(round(playerDict[item][2], 2)) + ' Cost: {:,d}'.format(playerDict[item][3]))
 
-print("\nCap Used: $" + str(capUsed))
+print("\nCap Used: ${:,d}".format(capUsed))
 print("Projected Points: " + str(round(pp, 2)))
 
 end = time.time()
