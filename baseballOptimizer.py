@@ -1,7 +1,10 @@
-import csv, itertools, copy, time, os, re, shutil
+import csv, itertools, copy, time, os, re, math, shutil
 from collections import Counter
 from selenium import webdriver
 from poolReducer import poolReducer
+
+
+start = time.time()
 
 teamNames = {
 'LAA' : 'Angels',
@@ -38,7 +41,7 @@ teamNames = {
 
 urlBat = 'http://www.fangraphs.com/dailyprojections.aspx?pos=all&stats=bat&type=sabersim&team=0&lg=all&players=0'
 urlPit = 'http://www.fangraphs.com/dailyprojections.aspx?pos=all&stats=pit&type=sabersim&team=0&lg=all&players=0'
-urlFanDuel = 'https://www.fanduel.com/games/19342/contests/19342-209510202/enter'
+urlFanDuel = 'https://www.fanduel.com/games/19560/contests/19560-209749050/enter'
 # urlFanDuel should be user input on website
 
 batFolderPath = '/Users/RyanRobertson21/Desktop/battersPP-'
@@ -85,10 +88,11 @@ print('\nDownloading contest data from FanDuel...')
 contestLineup = downloadData(fanDuelFolderPath, urlFanDuel, 'Download players list')
 e3 = time.time()
 print(e3-s3)
+
 # to test when PP is not updated yet
-# contestLineup = list(csv.reader(open('/Users/RyanRobertson21/Desktop/FD_5-16.csv')))[1:]
-# battersPP = list(csv.reader(open('/Users/RyanRobertson21/Desktop/battersPP-Tue May 16 18_17_23 2017/FanGraphs Leaderboard.csv')))[1:]
-# pitchersPP = list(csv.reader(open('/Users/RyanRobertson21/Desktop/pitchersPP-Tue May 16 18_17_56 2017/FanGraphs Leaderboard.csv')))[1:]
+#contestLineup = list(csv.reader(open('/Users/RyanRobertson21/Desktop/fanDuel-Sat May 20 15_35_56 2017/FanDuel-MLB-2017-05-20-19376-players-list.csv')))[1:]
+#battersPP = list(csv.reader(open('/Users/RyanRobertson21/Desktop/battersPP-Sat May 20 16_29_31 2017/FanGraphs Leaderboard.csv')))[1:]
+#pitchersPP = list(csv.reader(open('/Users/RyanRobertson21/Desktop/pitchersPP-Sat May 20 16_29_48 2017/FanGraphs Leaderboard.csv')))[1:]
 
 def editPlayerName(elementName, rowIndex):
     fullName = elementName[rowIndex].lower().replace(".", "").replace(" jr", "").split(' ', 1)
@@ -102,9 +106,9 @@ def editPlayerName(elementName, rowIndex):
         name = name.replace(removeInitial.group(), ' ')
     return name
 
+
 playerNamesToCheck = []
 playerDict = {}
-
 
 
 for row in contestLineup:
@@ -140,19 +144,21 @@ for row in contestLineup:
 # as FanDuels total lineup spreadsheet. Works best when no games have started yet, otherwise players in games that have started
 # are no longer eligibile to be selected for the contest in Fanduel. So while they will appear in the projected poitns spreadsheet
 # they wont, and shouldn't appear on fanduel, and thus wont be read in.
-# print('\nBatters missing from PP\n')
-# for ppRow in battersPP:
-#     ppName = editPlayerName(ppRow, 0)
-#
-#     if ppName not in playerNamesToCheck:
-#         print(ppName)
-#
-# print('\nPitchers missing from PP\n')
-# for ppRow in pitchersPP:
-#     ppName = editPlayerName(ppRow, 0)
-#
-#     if ppName not in playerNamesToCheck:
-#         print(ppName)
+
+print('\nBatters missing from PP\n')
+for ppRow in battersPP:
+    ppName = editPlayerName(ppRow, 0)
+
+    if ppName not in playerNamesToCheck:
+        print(ppName)
+
+print('\nPitchers missing from PP\n')
+for ppRow in pitchersPP:
+    ppName = editPlayerName(ppRow, 0)
+
+    if ppName not in playerNamesToCheck:
+        print(ppName)
+
 # print('\nPlayer missing from FanDuel\n')
 # for row in contestLineup:
 #     fdName = editPlayerName(row, 3)
@@ -298,29 +304,19 @@ def ofFilterMoreExpensiveLessPP(positionDict):
             break
 
         count += 1
-
-    return outfielderListSalaryOrder
+    outfielders = [item[0] for item in outfielderListSalaryOrder]
+    return outfielders
 
 
 print('\nAFTER FIRST FILTER!')
-print('Pitchers: ' + str(len(positionFilter(pitchers))))
-print('Catchers: ' + str(len(positionFilter(catchers))))
-print('FirstBase: ' + str(len(positionFilter(firstBase))))
-print('SecondBase: ' + str(len(positionFilter(secondBase))))
-print('ThirdBase: ' + str(len(positionFilter(thirdBase))))
-print('ShortStop: ' + str(len(positionFilter(shortStop))))
-print('Outfielders: ' + str(len(ofPositionFilter(outfielders))))
+pitchers = positionFilter(pitchers)
+catchers = positionFilter(catchers)
+firstBase = positionFilter(firstBase)
+secondBase = positionFilter(secondBase)
+thirdBase = positionFilter(thirdBase)
+shortStop = positionFilter(shortStop)
+outfielders = ofPositionFilter(outfielders)
 
-pitchers = filterMoreExpensiveLessPP(positionFilter(pitchers))
-catchers = filterMoreExpensiveLessPP(positionFilter(catchers))
-firstBase = filterMoreExpensiveLessPP(positionFilter(firstBase))
-secondBase = filterMoreExpensiveLessPP(positionFilter(secondBase))
-thirdBase = filterMoreExpensiveLessPP(positionFilter(thirdBase))
-shortStop = filterMoreExpensiveLessPP(positionFilter(shortStop))
-outfielders = ofFilterMoreExpensiveLessPP(ofPositionFilter(outfielders))
-
-
-print('\nAFTER BOTH FILTERS...')
 print('Pitchers: ' + str(len(pitchers)))
 print('Catchers: ' + str(len(catchers)))
 print('FirstBase: ' + str(len(firstBase)))
@@ -329,57 +325,206 @@ print('ThirdBase: ' + str(len(thirdBase)))
 print('ShortStop: ' + str(len(shortStop)))
 print('Outfielders: ' + str(len(outfielders)))
 
-start = time.time()
+
+print('\nAFTER BOTH FILTERS...')
+pitchers = filterMoreExpensiveLessPP(pitchers)
+catchers = filterMoreExpensiveLessPP(catchers)
+firstBase = filterMoreExpensiveLessPP(firstBase)
+secondBase = filterMoreExpensiveLessPP(secondBase)
+thirdBase = filterMoreExpensiveLessPP(thirdBase)
+shortStop = filterMoreExpensiveLessPP(shortStop)
+outfielders = ofFilterMoreExpensiveLessPP(outfielders)
+
+
+print('Pitchers: ' + str(len(pitchers)))
+print('Catchers: ' + str(len(catchers)))
+print('FirstBase: ' + str(len(firstBase)))
+print('SecondBase: ' + str(len(secondBase)))
+print('ThirdBase: ' + str(len(thirdBase)))
+print('ShortStop: ' + str(len(shortStop)))
+print('Outfielders: ' + str(len(outfielders)))
+
+
+pitchersCatchers = set(itertools.product(pitchers, catchers))
+firstSecond = set(itertools.product(firstBase, secondBase))
+thirdShort = set(itertools.product(thirdBase, shortStop))
+
+
+
+def groupFilter(group):
+    toDelete = set()
+    for x, y in group:
+        for x2, y2 in group:
+            if playerDict[x][3] + playerDict[y][3] > playerDict[x2][3] + playerDict[y2][3] and playerDict[x][2] + playerDict[y][2] <= playerDict[x2][2] + playerDict[y2][2]:
+                pair = (str(x), str(y))
+                toDelete.add(pair)
+    group = group.difference(toDelete)
+
+    toDelete = set()
+    for x, y in group:
+        for x2, y2 in group:
+            if playerDict[x][3] + playerDict[y][3] == playerDict[x2][3] + playerDict[y2][3] and playerDict[x][2] + playerDict[y][2] < playerDict[x2][2] + playerDict[y2][2]:
+                pair = (str(x), str(y))
+                toDelete.add(pair)
+    group = group.difference(toDelete)
+    return group
+
+pitchersCatchers = groupFilter(pitchersCatchers)
+firstSecond = groupFilter(firstSecond)
+thirdShort = groupFilter(thirdShort)
+
+c = set(itertools.product(firstSecond, thirdShort))
+
+
+toDelete = set()
+for x, y in c:
+    for x2, y2 in c:
+        if playerDict[x[0]][3] + playerDict[x[1]][3] + playerDict[y[0]][3] + playerDict[y[1]][3] > playerDict[x2[0]][3] + playerDict[x2[1]][3] + playerDict[y2[0]][3] + playerDict[y2[1]][3] \
+            and playerDict[x[0]][2] + playerDict[x[1]][2] + playerDict[y[0]][2] + playerDict[y[1]][2] <= playerDict[x2[0]][2] + playerDict[x2[1]][2] + playerDict[y2[0]][2] + playerDict[y2[1]][2]:
+            quad = ((str(x[0]), str(x[1])), (str(y[0]), str(y[1])))
+            toDelete.add(quad)
+c = c.difference(toDelete)
+
+
+toDelete = set()
+for x, y in c:
+    for x2, y2 in c:
+        if playerDict[x[0]][3] + playerDict[x[1]][3] + playerDict[y[0]][3] + playerDict[y[1]][3] == playerDict[x2[0]] \
+            [3] + playerDict[x2[1]][3] + playerDict[y2[0]][3] + playerDict[y2[1]][3] \
+                and playerDict[x[0]][2] + playerDict[x[1]][2] + playerDict[y[0]][2] + playerDict[y[1]][2] < \
+                playerDict[x2[0]][2] + playerDict[x2[1]][2] + playerDict[y2[0]][2] + playerDict[y2[1]][2]:
+            quad = ((str(x[0]), str(x[1])), (str(y[0]), str(y[1])))
+            #is str() necessary here?
+            toDelete.add(quad)
+firstSecondThirdShort = c.difference(toDelete)
+
+firstSecondThirdShortss = set()
+for group in firstSecondThirdShort:
+    squad = []
+    for pair in group:
+        for player in pair:
+            squad.append(player)
+    squad = tuple(squad)
+    firstSecondThirdShortss.add(squad)
+
+
+infielders = set(itertools.product(pitchersCatchers, firstSecondThirdShortss))
+
+
+toDelete = set()
+for x, y in infielders:
+    for x2, y2 in infielders:
+        if playerDict[x[0]][3] + playerDict[x[1]][3] + playerDict[y[0]][3] + playerDict[y[1]][3] + playerDict[y[2]][3] + playerDict[y[3]][3] \
+        > playerDict[x2[0]][3] + playerDict[x2[1]][3] + playerDict[y2[0]][3] + playerDict[y2[1]][3] + playerDict[y2[2]][3] + playerDict[y2[3]][3] \
+        and playerDict[x[0]][2] + playerDict[x[1]][2] + playerDict[y[0]][2] + playerDict[y[1]][2] + playerDict[y[2]][2] + playerDict[y[3]][2] \
+        <= playerDict[x2[0]][2] + playerDict[x2[1]][2] + playerDict[y2[0]][2] + playerDict[y2[1]][2] + playerDict[y2[2]][2] + playerDict[y2[3]][2]:
+            squad = (x, y)
+            toDelete.add(squad)
+
+infielders = infielders.difference(toDelete)
+
+toDelete = set()
+for x, y in infielders:
+    for x2, y2 in infielders:
+        if playerDict[x[0]][3] + playerDict[x[1]][3] + playerDict[y[0]][3] + playerDict[y[1]][3] + playerDict[y[2]][3] + playerDict[y[3]][3] \
+        == playerDict[x2[0]][3] + playerDict[x2[1]][3] + playerDict[y2[0]][3] + playerDict[y2[1]][3] + playerDict[y2[2]][3] + playerDict[y2[3]][3] \
+        and playerDict[x[0]][2] + playerDict[x[1]][2] + playerDict[y[0]][2] + playerDict[y[1]][2] + playerDict[y[2]][2] + playerDict[y[3]][2] \
+        < playerDict[x2[0]][2] + playerDict[x2[1]][2] + playerDict[y2[0]][2] + playerDict[y2[1]][2] + playerDict[y2[2]][2] + playerDict[y2[3]][2]:
+            squad = (x, y)
+            toDelete.add(squad)
+
+infielders = infielders.difference(toDelete)
+
+
+infielders2 = set()
+for group in infielders:
+    squad = []
+    for pair in group:
+        for player in pair:
+            squad.append(player)
+    squad = tuple(squad)
+    infielders2.add(squad)
+
+
 outfielderGroups = list(itertools.combinations(outfielders, 3))
 print("\nNumber of oufielder combinations: {:,d}".format(len(outfielderGroups)))
 
-allLineups = list(itertools.product(pitchers, catchers, firstBase, secondBase, thirdBase, shortStop, outfielderGroups))
+allLineups = list(itertools.product(infielders2, outfielderGroups))
 print("\nNumber of possibly optimal lineups: {:,d}".format(len(allLineups)))
-print(allLineups[2])
-underCap = {}
-count = 1
-for lineup in allLineups:
+#print(allLineups[2])
+# toDelete = set()
+# for infield, outfield in allLineups:
+#     for infield2, outfield2 in allLineups:
+#         if playerDict[infield[0]][3] + playerDict[infield[1]][3] + playerDict[infield[2]][3] + playerDict[infield[3]][3] + playerDict[infield[4]][3] + \
+#         playerDict[infield[5]][3] + playerDict[outfield[0]][3] + playerDict[outfield[1]][3] + playerDict[outfield[2]][3] > playerDict[infield2[0]][3] + \
+#         playerDict[infield2[1]][3] + playerDict[infield2[2]][3] + playerDict[infield2[3]][3] + playerDict[infield2[4]][3] + playerDict[infield2[5]][3] + \
+#         playerDict[outfield2[0]][3] + playerDict[outfield2[1]][3] + playerDict[outfield2[2]][3] and playerDict[infield[0]][2] + playerDict[infield[1]][2] + \
+#         playerDict[infield[2]][2] + playerDict[infield[3]][2] + playerDict[infield[4]][2] + playerDict[infield[5]][2] + playerDict[outfield[0]][2] + \
+#         playerDict[outfield[1]][2] + playerDict[outfield[2]][2] <= playerDict[infield2[0]][2] + playerDict[infield2[1]][2] + playerDict[infield2[2]][2] +\
+#         playerDict[infield2[3]][2] + playerDict[infield2[4]][2] + playerDict[infield2[5]][2] + playerDict[outfield2[0]][2] + playerDict[outfield2[1]][2] + \
+#         playerDict[outfield2[2]][2]:
+#             squad = (infield, outfield)
+#             toDelete.add(squad)
+# allLineups = allLineups.difference(toDelete)
+# print(len(allLineups))
+
+underCap = []
+for infield, outfield in allLineups:
     salary = 0
-    for item in lineup:
-        if type(item) == tuple:
-            for of in item:
-                salary += of[4]
-        else:
-            salary += playerDict[item][3]
+    salary += playerDict[infield[0]][3] + playerDict[infield[1]][3] + playerDict[infield[2]][3] + playerDict[infield[3]][3] + playerDict[infield[4]][3] + \
+              playerDict[infield[5]][3] + playerDict[outfield[0]][3] + playerDict[outfield[1]][3] + playerDict[outfield[2]][3]
     if salary <= 35000:
-        underCap[count] = lineup
-        count += 1
+        team = (infield, outfield)
+        underCap.append(team)
+
 
 print("\nNumber of possibly optimal lineups under the cap: {:,d}\n".format(len(underCap)))
 
 underCapPP = {}
-for key in underCap:
+for infield, outfield in underCap:
     projectedPoints = 0
-    for item in underCap[key]:
-        if type(item) == tuple:
-            for of in item:
-                projectedPoints += of[3]
-        else:
-            projectedPoints += playerDict[item][2]
-    underCapPP[projectedPoints] = underCap[key]
+    projectedPoints += playerDict[infield[0]][2] + playerDict[infield[1]][2] + playerDict[infield[2]][2] + playerDict[infield[3]][2] + \
+                       playerDict[infield[4]][2] + playerDict[infield[5]][2] + playerDict[outfield[0]][2] + playerDict[outfield[1]][2] + playerDict[outfield[2]][2]
+
+    team = (infield, outfield)
+    underCapPP[projectedPoints] = team
+
+
 
 pp = max(underCapPP)
 optimalLineup = underCapPP[pp]
+### CHECK TO SEE HOW MANY TRULEY OPTIMAL LINEUPS EXIST
+# count = 0
+# for infield, outfield in underCap:
+#     projectedPoints = 0
+#     projectedPoints += playerDict[infield[0]][2] + playerDict[infield[1]][2] + playerDict[infield[2]][2] + playerDict[infield[3]][2] + \
+#                        playerDict[infield[4]][2] + playerDict[infield[5]][2] + playerDict[outfield[0]][2] + playerDict[outfield[1]][2] + playerDict[outfield[2]][2]
+#
+#     if projectedPoints == pp:
+#         count += 1
+# print('number of optimal lineups that exist')
+# print(count)
 
 
 capUsed = 0
-for item in optimalLineup:
-    if type(item) == tuple:
-        item = sorted(item, key=lambda x: (x[4] * -1, x[3] * -1))
-        for of in item:
-            capUsed += of[4]
-            print(of[1] + ": " + of[2] + ' PP: ' + str(round(of[3], 2)) + ' Cost: {:,d}'.format(of[4]))
+for group in optimalLineup:
+    for player in group:
+        capUsed += playerDict[player][3]
+
+    if len(group) == 3:
+        outfield = sorted(group, key=lambda x: (playerDict[x][3] * -1, x[2] * -1))
+        for of in outfield:
+            print(playerDict[of][0] + ": " + playerDict[of][1] + ' PP: ' + str(round(playerDict[of][2], 2)) + ' Cost: ${:,d}'.format(playerDict[of][3]))
     else:
-        capUsed += playerDict[item][3]
-        print(playerDict[item][0] + ": " + playerDict[item][1] + ' PP: ' + str(round(playerDict[item][2], 2)) + ' Cost: {:,d}'.format(playerDict[item][3]))
+        for player in group:
+            print(playerDict[player][0] + ": " + playerDict[player][1] + ' PP: ' + str(round(playerDict[player][2], 2)) + ' Cost: ${:,d}'.format(playerDict[player][3]))
 
 print("\nCap Used: ${:,d}".format(capUsed))
 print("Projected Points: " + str(round(pp, 2)))
 
 end = time.time()
 print("\nRuntime from outfielderGroups calculation til end of program: " + str(end-start) + " seconds.")
+
+
+
+### TEST BOTH WITH AND WITHOUT CHANGING OUTFIELDER GROUP FROM LIST TO SET OR WHATEVER I DID
