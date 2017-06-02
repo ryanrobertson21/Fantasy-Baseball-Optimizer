@@ -106,6 +106,10 @@ def editPlayerName(elementName, rowIndex):
         name = name.replace(removeInitial.group(), ' ')
     return name
 
+def combinationsCalculator(n):
+    groupings = 3
+    combos = int(math.factorial(n)/(math.factorial(groupings)*math.factorial(n-groupings)))
+    return combos
 
 playerNamesToCheck = []
 playerDict = {}
