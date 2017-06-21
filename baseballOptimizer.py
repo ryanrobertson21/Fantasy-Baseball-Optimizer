@@ -391,7 +391,7 @@ def findMaxPP(playerDict, pitchers, catchers, firstBase, secondBase, thirdBase, 
         outfielders = [item[0] for item in outfielderListSalaryOrder]
         return outfielders
 
-    # Pair players from one position up with players from another position and eliminate them in the same way as before
+    # Eliminate pairs of players in the same way as before
     def groupFilter(group):
         # If one pair has a higher combined salary and a lower or equal combined projected points value than another pair, eliminate that pair
         toDelete = set()
@@ -417,7 +417,7 @@ def findMaxPP(playerDict, pitchers, catchers, firstBase, secondBase, thirdBase, 
         group = group.difference(toDelete)
         return group
 
-    # Combine outfielders in groups of three and eliminate them in the same way as before
+    # Eliminate groups of outfielders in the same way as before
     def oufielderGroupFilter(group):
         # If a group of outfielders has a higher combined salary and a lower or equal combined projected points value than another group, eliminate that group
         toDelete = set()
@@ -447,6 +447,7 @@ def findMaxPP(playerDict, pitchers, catchers, firstBase, secondBase, thirdBase, 
         outfielderGroups = group.difference(toDelete)
         return outfielderGroups
 
+    # Filter out players that would never be selected for the optimal lineup
     pitchers2 = filterMoreExpensiveLessPP(positionFilter(pitchers))
     catchers2 = filterMoreExpensiveLessPP(positionFilter(catchers))
     firstBase2 = filterMoreExpensiveLessPP(positionFilter(firstBase))
@@ -454,12 +455,15 @@ def findMaxPP(playerDict, pitchers, catchers, firstBase, secondBase, thirdBase, 
     thirdBase2 = filterMoreExpensiveLessPP(positionFilter(thirdBase))
     shortStop2 = filterMoreExpensiveLessPP(positionFilter(shortStop))
     outfielders2 = ofFilterMoreExpensiveLessPP(ofPositionFilter(outfielders))
-
+    # Filter out pairs of players that would never be selected for the optimal lineup
     pitchersCatchers = set(itertools.product(pitchers2, catchers2))
     firstSecond = set(itertools.product(firstBase2, secondBase2))
     thirdShort = set(itertools.product(thirdBase2, shortStop2))
+    # Create every possible grouping of outfielders from the remaining outfielders
     outfielderGroups = set(itertools.combinations(outfielders2, 3))
+    # Filter out outfielder groups that would never be selected for the optimal lineup
     outfielderGroups = oufielderGroupFilter(outfielderGroups)
+    # Create every possible lineup from the remaining players
     allLineups = list(itertools.product(pitchersCatchers, firstSecond, thirdShort, outfielderGroups))
 
     # Eliminate all lineups which violate the max salary cap constraint
@@ -523,7 +527,7 @@ def findMaxPP(playerDict, pitchers, catchers, firstBase, secondBase, thirdBase, 
             lineupsViolateConstraint.add(lineupToDelete)
             return findMaxPP(playerDict, pitchers, catchers, firstBase, secondBase, thirdBase, shortStop, outfielders,
                              teams, lineupsViolateConstraint)
-        # All constraints have been satisfied, return the optimal lineup
+        # All constraints have been satisfied, return the optimal lineup and its projected points total
         else:
             return underCapPP[pp], pp
 
