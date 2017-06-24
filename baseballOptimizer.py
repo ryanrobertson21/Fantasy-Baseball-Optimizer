@@ -3,6 +3,8 @@ from collections import Counter
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException
 
+import profile
+
 start = time.time()
 
 teamNames = {
@@ -123,36 +125,36 @@ def combinationsCalculator(n):
     return combos
 
 # Grab all the data
-urlBat = 'http://www.fangraphs.com/dailyprojections.aspx?pos=all&stats=bat&type=sabersim&team=0&lg=all&players=0'
-urlPit = 'http://www.fangraphs.com/dailyprojections.aspx?pos=all&stats=pit&type=sabersim&team=0&lg=all&players=0'
-urlFanDuel = 'https://www.fanduel.com/games/19779/contests/19779-209990225/enter' # Enter FanDuel Contest URL here
-
-batFolderPath = '/Users/RyanRobertson21/Desktop/battersPP-'
-pitFolderPath = '/Users/RyanRobertson21/Desktop/pitchersPP-'
-fanDuelFolderPath = '/Users/RyanRobertson21/Desktop/fanDuel-'
-
-s1= time.time()
-print('Downloading batters data from FanGraphs...')
-battersPP = downloadData(batFolderPath, urlBat, 'Export Data')
-e1 = time.time()
-print(e1-s1)
-time.sleep(3)
-s2 = time.time()
-print('\nDownloading pitchers data from FanGraphs...')
-pitchersPP = downloadData(pitFolderPath, urlPit, 'Export Data')
-e2 = time.time()
-print(e2-s2)
-time.sleep(3)
-s3 = time.time()
-print('\nDownloading contest data from FanDuel...')
-contestLineup = downloadData(fanDuelFolderPath, urlFanDuel, 'Download players list')
-e3 = time.time()
-print(e3-s3)
+# urlBat = 'http://www.fangraphs.com/dailyprojections.aspx?pos=all&stats=bat&type=sabersim&team=0&lg=all&players=0'
+# urlPit = 'http://www.fangraphs.com/dailyprojections.aspx?pos=all&stats=pit&type=sabersim&team=0&lg=all&players=0'
+# urlFanDuel = 'https://www.fanduel.com/games/19779/contests/19779-209990225/enter' # Enter FanDuel Contest URL here
+#
+# batFolderPath = '/Users/RyanRobertson21/Desktop/battersPP-'
+# pitFolderPath = '/Users/RyanRobertson21/Desktop/pitchersPP-'
+# fanDuelFolderPath = '/Users/RyanRobertson21/Desktop/fanDuel-'
+#
+# s1= time.time()
+# print('Downloading batters data from FanGraphs...')
+# battersPP = downloadData(batFolderPath, urlBat, 'Export Data')
+# e1 = time.time()
+# print(e1-s1)
+# time.sleep(3)
+# s2 = time.time()
+# print('\nDownloading pitchers data from FanGraphs...')
+# pitchersPP = downloadData(pitFolderPath, urlPit, 'Export Data')
+# e2 = time.time()
+# print(e2-s2)
+# time.sleep(3)
+# s3 = time.time()
+# print('\nDownloading contest data from FanDuel...')
+# contestLineup = downloadData(fanDuelFolderPath, urlFanDuel, 'Download players list')
+# e3 = time.time()
+# print(e3-s3)
 
 # Used to test without having to pull projected points from fangraphs, or to run contests from previous dates
-#contestLineup = list(csv.reader(open('')))[1:] # Enter path to FanDuel file here
-#battersPP = list(csv.reader(open('')))[1:] # Enter path to Fangraphs batters projected points file here
-#pitchersPP = list(csv.reader(open('')))[1:] # Enter path to Fangraphs pitchers projected points file here
+contestLineup = list(csv.reader(open('/Users/RyanRobertson21/Downloads/FanDuel-MLB-2017-06-21-19795-players-list.csv')))[1:] # Enter path to FanDuel file here
+battersPP = list(csv.reader(open('/Users/RyanRobertson21/Desktop/6-21b.csv')))[1:] # Enter path to Fangraphs batters projected points file here
+pitchersPP = list(csv.reader(open('/Users/RyanRobertson21/Desktop/6-21p.csv')))[1:] # Enter path to Fangraphs pitchers projected points file here
 
 # Sabersim used to confirm that the optimal lineup this program outputs matches up with the optimal lineup Sabersim outputs (confirms it is the correct optimal lineup)
 #saberSim = list(csv.reader(open('')))[1:] # Enter path to Sabersim projected points file here
@@ -403,7 +405,7 @@ def findMaxPP(playerDict, pitchers, catchers, firstBase, secondBase, thirdBase, 
                     pair = (x, y)
                     toDelete.add(pair)
 
-        group = group.difference(toDelete)
+        group.difference_update(toDelete)
         # If one pair has the same combined salary as another pair but a lower combined projected points value, eliminate that pair
         toDelete = set()
         for a, b in group:
@@ -414,38 +416,36 @@ def findMaxPP(playerDict, pitchers, catchers, firstBase, secondBase, thirdBase, 
                     pair = (a, b)
                     toDelete.add(pair)
 
-        group = group.difference(toDelete)
+        group.difference_update(toDelete)
         return group
 
-    # Eliminate groups of outfielders in the same way as before
+        # Eliminate groups of outfielders in the same way as before
     def oufielderGroupFilter(group):
-        # If a group of outfielders has a higher combined salary and a lower or equal combined projected points value than another group, eliminate that group
-        toDelete = set()
+
+        # find the total salary and total projected points for each group of outfielders
+        newGroup = set()
         for x, y, z in group:
-            for x2, y2, z2 in group:
-                if playerDict[x][3] + playerDict[y][3] + playerDict[z][3] > playerDict[x2][3] + playerDict[y2][3] + \
-                        playerDict[z2][3] and \
-                                                playerDict[x][2] + playerDict[y][2] + playerDict[z][2] <= \
-                                                playerDict[x2][2] + playerDict[y2][2] + playerDict[z2][2] and \
-                                playerDict[x2][-1] not in teams and playerDict[y2][-1] not in teams and playerDict[z2][
-                    -1] not in teams:
-                    team = (x, y, z)
-                    toDelete.add(team)
-        group = group.difference(toDelete)
-        # If a group of outfielders has the same combined salary as another group but a lower combined projected points value, eliminate that group
+            salaryOF = playerDict[x][3] + playerDict[y][3] + playerDict[z][3]
+            projectedPointsOF = playerDict[x][2] + playerDict[y][2] + playerDict[z][2]
+            newGroup.add((x, y, z, projectedPointsOF, salaryOF))
+
+        # If a group of outfielders has a higher total salary and a lower or equal total projected points value than another group, eliminate that group
         toDelete = set()
-        for x, y, z in group:
-            for x2, y2, z2 in group:
-                if playerDict[x][3] + playerDict[y][3] + playerDict[z][3] == playerDict[x2][3] + playerDict[y2][3] + \
-                        playerDict[z2][3] and \
-                                                playerDict[x][2] + playerDict[y][2] + playerDict[z][2] < playerDict[x2][
-                            2] + playerDict[y2][2] + playerDict[z2][2] and \
-                                playerDict[x2][-1] not in teams and playerDict[y2][-1] not in teams and playerDict[z2][
-                    -1] not in teams:
-                    team = (x, y, z)
-                    toDelete.add(team)
-        outfielderGroups = group.difference(toDelete)
-        return outfielderGroups
+        for x, y, z, pp, sal in newGroup:
+            for x2, y2, z2, pp2, sal2 in newGroup:
+                if sal > sal2 and pp <= pp2 and playerDict[x2][-1] not in teams and playerDict[y2][-1] not in teams and playerDict[z2][-1] not in teams:
+                    toDelete.add((x, y, z))
+        group.difference_update(toDelete)
+
+        # If a group of outfielders has the same total salary as another group but a lower total projected points value, eliminate that group
+        toDelete = set()
+        for x, y, z, pp, sal in newGroup:
+            for x2, y2, z2, pp2, sal2, in newGroup:
+                if sal == sal2 and pp < pp2 and playerDict[x2][-1] not in teams and playerDict[y2][-1] not in teams and playerDict[z2][-1] not in teams:
+                    toDelete.add((x, y, z))
+        group.difference_update(toDelete)
+
+        return group
 
     # Filter out players that would never be selected for the optimal lineup
     pitchers2 = filterMoreExpensiveLessPP(positionFilter(pitchers))
@@ -455,42 +455,37 @@ def findMaxPP(playerDict, pitchers, catchers, firstBase, secondBase, thirdBase, 
     thirdBase2 = filterMoreExpensiveLessPP(positionFilter(thirdBase))
     shortStop2 = filterMoreExpensiveLessPP(positionFilter(shortStop))
     outfielders2 = ofFilterMoreExpensiveLessPP(ofPositionFilter(outfielders))
+
     # Filter out pairs of players that would never be selected for the optimal lineup
-    pitchersCatchers = set(itertools.product(pitchers2, catchers2))
-    firstSecond = set(itertools.product(firstBase2, secondBase2))
-    thirdShort = set(itertools.product(thirdBase2, shortStop2))
+    """ADD THE GROUP FILTER PART ONLINE"""
+    pitchersCatchers = groupFilter(set(itertools.product(pitchers2, catchers2)))
+    firstSecond = groupFilter(set(itertools.product(firstBase2, secondBase2)))
+    thirdShort = groupFilter(set(itertools.product(thirdBase2, shortStop2)))
     # Create every possible grouping of outfielders from the remaining outfielders
     outfielderGroups = set(itertools.combinations(outfielders2, 3))
     # Filter out outfielder groups that would never be selected for the optimal lineup
     outfielderGroups = oufielderGroupFilter(outfielderGroups)
+
     # Create every possible lineup from the remaining players
     allLineups = list(itertools.product(pitchersCatchers, firstSecond, thirdShort, outfielderGroups))
 
+    """Add Online. also add teh four other .difference_update(set)"""
     # Eliminate all lineups which violate the max salary cap constraint
-    underCap = set()
+    underCap = set([(pc, fs, ts, of) for pc, fs, ts, of in allLineups if
+                    playerDict[pc[0]][3] + playerDict[pc[1]][3] + playerDict[fs[0]][3] + playerDict[fs[1]][3] + \
+                    playerDict[ts[0]][3] + playerDict[ts[1]][3] + \
+                    playerDict[of[0]][3] + playerDict[of[1]][3] + playerDict[of[2]][3] <= 35000])
 
-    for pc, fs, ts, of in allLineups:
-        salary = 0
-        salary += playerDict[pc[0]][3] + playerDict[pc[1]][3] + playerDict[fs[0]][3] + playerDict[fs[1]][3] + \
-                  playerDict[ts[0]][3] + playerDict[ts[1]][3] + \
-                  playerDict[of[0]][3] + playerDict[of[1]][3] + playerDict[of[2]][3]
+    # If any lineups have previously violated the max player from the same team constraint, eliminate them
+    underCap.difference_update(lineupsViolateConstraint)
 
-        squad = (pc, fs, ts, of)
-        if salary <= 35000:
-            underCap.add(squad)
-    underCap = underCap.difference(lineupsViolateConstraint)
 
     # Calculate the projected points for all remaining lineups
-    underCapPP = {}
-    for pc, fs, ts, of in underCap:
-        projectedPoints = 0
-        projectedPoints += playerDict[pc[0]][2] + playerDict[pc[1]][2] + playerDict[fs[0]][2] + playerDict[fs[1]][2] + \
-                           playerDict[ts[0]][2] + \
-                           playerDict[ts[1]][2] + playerDict[of[0]][2] + playerDict[of[1]][2] + playerDict[of[2]][2]
+    underCapPP = {playerDict[pc[0]][2] + playerDict[pc[1]][2] + playerDict[fs[0]][2] + playerDict[fs[1]][2] + playerDict[ts[0]][2] + \
+                  playerDict[ts[1]][2] + playerDict[of[0]][2] + playerDict[of[1]][2] + \
+                  playerDict[of[2]][2]: (pc, fs, ts, of) for pc, fs, ts, of in underCap}
 
-        team = (pc, fs, ts, of)
-        underCapPP[projectedPoints] = team
-
+    """/Online"""
     # Find the lineup with the highest projected points total
     pp = max(underCapPP)
 
@@ -531,26 +526,27 @@ def findMaxPP(playerDict, pitchers, catchers, firstBase, secondBase, thirdBase, 
         else:
             return underCapPP[pp], pp
 
-optimalLineup, pp = findMaxPP(playerDict,pitchers,catchers,firstBase,secondBase,thirdBase,shortStop,outfielders)
-
-# Format and print out optimal lineup information
-capUsed = 0
-for group in optimalLineup:
-    for player in group:
-        capUsed += playerDict[player][3]
-
-    if len(group) == 3:
-        outfield = sorted(group, key=lambda x: (playerDict[x][3] * -1, x[2] * -1))
-        for of in outfield:
-            print(playerDict[of][0] + ": " + playerDict[of][1] + ' PP: ' + str(round(playerDict[of][2], 2)) + ' Cost: ${:,d}'.format(playerDict[of][3]) + \
-                " Team: " + str(playerDict[of][-1]))
-    else:
-        for player in group:
-            print(playerDict[player][0] + ": " + playerDict[player][1] + ' PP: ' + str(round(playerDict[player][2], 2)) + ' Cost: ${:,d}'.format(playerDict[player][3]) + \
-            " Team: " + str(playerDict[player][-1]))
-
-print("\nCap Used: ${:,d}".format(capUsed))
-print("Projected Points: " + str(round(pp, 2)))
-
-end = time.time()
-print("\nRuntime of program: " + str(end-start) + " seconds.")
+profile.run('print(findMaxPP(playerDict,pitchers,catchers,firstBase,secondBase,thirdBase,shortStop,outfielders)); print()')
+# optimalLineup, pp = findMaxPP(playerDict,pitchers,catchers,firstBase,secondBase,thirdBase,shortStop,outfielders)
+#
+# # Format and print out optimal lineup information
+# capUsed = 0
+# for group in optimalLineup:
+#     for player in group:
+#         capUsed += playerDict[player][3]
+#
+#     if len(group) == 3:
+#         outfield = sorted(group, key=lambda x: (playerDict[x][3] * -1, x[2] * -1))
+#         for of in outfield:
+#             print(playerDict[of][0] + ": " + playerDict[of][1] + ' PP: ' + str(round(playerDict[of][2], 2)) + ' Cost: ${:,d}'.format(playerDict[of][3]) + \
+#                 " Team: " + str(playerDict[of][-1]))
+#     else:
+#         for player in group:
+#             print(playerDict[player][0] + ": " + playerDict[player][1] + ' PP: ' + str(round(playerDict[player][2], 2)) + ' Cost: ${:,d}'.format(playerDict[player][3]) + \
+#             " Team: " + str(playerDict[player][-1]))
+#
+# print("\nCap Used: ${:,d}".format(capUsed))
+# print("Projected Points: " + str(round(pp, 2)))
+#
+# end = time.time()
+# print("\nRuntime of program: " + str(end-start) + " seconds.")
