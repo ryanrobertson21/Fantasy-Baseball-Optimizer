@@ -194,7 +194,6 @@ numLineups = combinationsCalculator(len(pitchers), 2) * len(catchers) * len(firs
 print("\nNumber of Possibly Optimal Lineups: {:,d}\n".format(numLineups))
 
 
-
 """
    Function to find the optimal lineup. Finds the lineup with the highest projected points total that satisfies
    the constraints. Function is recursive so that if the optimal lineup violates the max players from the same team
